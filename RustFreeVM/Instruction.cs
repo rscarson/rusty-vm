@@ -53,13 +53,17 @@ namespace RustFreeVM {
 
     class Operand {
         public byte Type { get; set; }
-        public object Value { get; set; }
+        public Value Value { get; set; }
 
         public enum Types {
             Register = 0x0,
             Static = 0x01, StaticW = 0x02,
             Direct = 0x03, Indirect = 0x04,
             DirectW = 0x05, IndirectW = 0x06
+        }
+
+        public bool isWide() {
+            return (Type == (byte)Types.StaticW || Type == (byte)Types.DirectW || Type == (byte)Types.IndirectW);
         }
     }
 }

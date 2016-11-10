@@ -6,7 +6,8 @@ namespace RustFreeVM {
     partial class Cpu {
         public const ushort PC_START = 0x0000;
         public const ushort SP_START = 0xFFFF;
-        
+
+        private Bus bus;
         private byte a, b, flag;
         private ushort x, y, pc, sp;
 
@@ -15,6 +16,8 @@ namespace RustFreeVM {
             x = y = 0;
             pc = PC_START;
             sp = SP_START;
+
+            bus = Bus.getInstance();
         }
 
         public void Cycle() {
@@ -30,7 +33,6 @@ namespace RustFreeVM {
         }
 
         public Instruction fetch() {
-            Bus bus = Bus.getInstance();
             Instruction instruction = new Instruction();
 
             // Read opcode
@@ -206,6 +208,15 @@ namespace RustFreeVM {
         public enum Registers {
             A=0x00, B=0x01, X=0x02, Y=0x03,
             PC=0x04, SP=0x05
+        }
+
+        public enum Flags {
+            Carry = 0x01,
+            Parity = 0x02,
+            Zero = 0x04,
+            Sign = 0x08,
+            Interrupt = 0x10,
+            Overflow = 0x20
         }
     }
 }
