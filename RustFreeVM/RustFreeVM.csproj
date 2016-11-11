@@ -43,7 +43,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryInstructions.cs" />
     <Compile Include="Bus.cs" />
+    <Compile Include="Cpu.cs" />
+    <Compile Include="CoreInstructions.cs" />
+    <Compile Include="ShiftInstructions.cs" />
+    <Compile Include="Instruction.cs" />
     <Compile Include="Memory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

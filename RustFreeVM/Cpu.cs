@@ -8,11 +8,11 @@ namespace RustFreeVM {
         public const ushort SP_START = 0xFFFF;
 
         private Bus bus;
-        private byte a, b, flag;
+        private byte a, b, flags;
         private ushort x, y, pc, sp;
 
         public Cpu() {
-            a = b = flag = 0;
+            a = b = flags = 0;
             x = y = 0;
             pc = PC_START;
             sp = SP_START;
@@ -32,6 +32,10 @@ namespace RustFreeVM {
             t.Start();
         }
 
+        /// <summary>
+        /// Fetch an instruction from memory
+        /// </summary>
+        /// <returns>The instruction</returns>
         public Instruction fetch() {
             Instruction instruction = new Instruction();
 
@@ -70,7 +74,7 @@ namespace RustFreeVM {
                 }
                 
                 switch (operand.Type) {
-                    // Single byte in memory
+                    // Single byte
                     case (byte)Operand.Types.Register:
                     case (byte)Operand.Types.Static:
                         operand.Value = bus.WaitOnCommand(new Bus.Command(
@@ -80,47 +84,15 @@ namespace RustFreeVM {
                         address += 2;
                         break;
                     
-                    // Single word in memory
+                    // Single word
                     case (byte)Operand.Types.StaticW:
-                        operand.Value = bus.WaitOnCommand(new Bus.Command(
-                            Memory.DEVICE_ID, (byte)Memory.Commands.ReadWord,
-                            (ushort)(address + 1), null
-                        ));
-                        address += 3;
-                        break;
-
-                    // Single byte at an address
                     case (byte)Operand.Types.Direct:
-                        operand.Value = bus.WaitOnCommand(new Bus.Command(
-                            Memory.DEVICE_ID, (byte)Memory.Commands.ReadByte,
-                            direct_address, null
-                        ));
-                        address += 3;
-                        break;
-
-                    // Single word at an address
                     case (byte)Operand.Types.DirectW:
-                        operand.Value = bus.WaitOnCommand(new Bus.Command(
-                            Memory.DEVICE_ID, (byte)Memory.Commands.ReadWord,
-                            direct_address, null
-                        ));
-                        address += 3;
-                        break;
-
-                    // Single byte at an indirect address
                     case (byte)Operand.Types.Indirect:
-                        operand.Value = bus.WaitOnCommand(new Bus.Command(
-                            Memory.DEVICE_ID, (byte)Memory.Commands.ReadByte,
-                            direct_address, null
-                        ));
-                        address += 3;
-                        break;
-
-                    // Single word at an indirect address
                     case (byte)Operand.Types.IndirectW:
                         operand.Value = bus.WaitOnCommand(new Bus.Command(
                             Memory.DEVICE_ID, (byte)Memory.Commands.ReadWord,
-                            direct_address, null
+                            (ushort)(address + 1), null
                         ));
                         address += 3;
                         break;
@@ -130,6 +102,13 @@ namespace RustFreeVM {
                         break;
                 }
 
+                if (operand.Type == (byte)Operand.Types.Indirect || operand.Type == (byte)Operand.Types.IndirectW) {
+                    operand.Value = bus.WaitOnCommand(new Bus.Command(
+                        Memory.DEVICE_ID, (byte)Memory.Commands.ReadWord,
+                        operand.Value.Word(), null
+                    ));
+                }
+
                 instruction.Operands.Add(operand);
             }
 
@@ -137,13 +116,21 @@ namespace RustFreeVM {
             return instruction;
         }
 
+        /// <summary>
+        /// Execute an instruction
+        /// </summary>
+        /// <param name="instruction">Instruction to execute</param>
         public void execute(Instruction instruction) {
             switch (instruction.Opcode) {
                 case (byte)Instruction.Operators.NOP:
                     break;
 
+                case (byte)Instruction.Operators.HLT:
+                    HLT();
+                    break;
+
                 case (byte)Instruction.Operators.MOV:
-                    MOV(instruction.Operands);
+                    MOV(instruction.Operands[0], instruction.Operands[1]);
                     break;
 
                 default:
@@ -152,6 +139,11 @@ namespace RustFreeVM {
             }
         }
 
+        /// <summary>
+        /// Get a register's value
+        /// </summary>
+        /// <param name="register">Registr ID</param>
+        /// <returns>The current register value</returns>
         public Value getRegister(byte register) {
             switch (register) {
                 case (byte)Registers.A:
@@ -173,6 +165,11 @@ namespace RustFreeVM {
             }
         }
 
+        /// <summary>
+        /// Set the value of a register
+        /// </summary>
+        /// <param name="register">Register ID</param>
+        /// <param name="value">Value to set</param>
         public void setRegister(byte register, Value value) {
             switch (register) {
                 case (byte)Registers.A:
@@ -200,16 +197,43 @@ namespace RustFreeVM {
             }
         }
 
+        /// <summary>
+        /// Resolve an instruction to value mode
+        /// </summary>
+        /// <param name="operand">The raw operand</param>
+        public void resolve(Operand operand) {
+            if (operand.Type == (byte)Operand.Types.Register) {
+                // Correct for register sources
+                operand.Value = getRegister((byte)operand.Type);
+            } else if (operand.Type == (byte)Operand.Types.Direct || operand.Type == (byte)Operand.Types.DirectW || operand.Type == (byte)Operand.Types.Indirect || operand.Type == (byte)Operand.Types.IndirectW) {
+                // Memory based operands
+                operand.Value = bus.WaitOnCommand(new Bus.Command(
+                        Memory.DEVICE_ID, (byte)Memory.Commands.ReadWord,
+                        operand.Value.Word(), null
+                    ));
+            }
+        }
+
+        /// <summary>
+        /// Stop execution on an error
+        /// </summary>
+        /// <param name="msg"></param>
         public void panic(string msg) {
             Console.WriteLine("SYSTEM ERROR: " + msg);
             System.Environment.Exit(1);
         }
 
+        /// <summary>
+        /// Represents the identifiers for registers
+        /// </summary>
         public enum Registers {
             A=0x00, B=0x01, X=0x02, Y=0x03,
             PC=0x04, SP=0x05
         }
 
+        /// <summary>
+        /// Masks for the various state flags
+        /// </summary>
         public enum Flags {
             Carry = 0x01,
             Parity = 0x02,

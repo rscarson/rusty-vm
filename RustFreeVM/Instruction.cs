@@ -10,7 +10,7 @@ namespace RustFreeVM {
         }
 
         public enum Operators {
-            NOP=0x00, MOV=0x01, 
+            NOP=0x00, HLT=0x01, MOV=0x02, 
             ADD=0x10, SUB=0x11, MUL=0x12, DIV=0x13, IMUL=0x14, IDIV=0x15, MOD=0x16, AVG=0x17, DEC=0x18, INC=0x19, NEG=0x1A, 
             ROTL=0x20, ROTR=0x21, SHFL=0x22, SHFR=0x23, ASHFL=0x24, ASHFR=0x25, 
             NOT=0x30, OR=0x31, AND=0x32, XOR=0x33, 
@@ -54,6 +54,11 @@ namespace RustFreeVM {
     class Operand {
         public byte Type { get; set; }
         public Value Value { get; set; }
+
+        public Operand(Operand _source) {
+            Type = _source.Type;
+            Value = new Value(_source.Value);
+        }
 
         public enum Types {
             Register = 0x0,

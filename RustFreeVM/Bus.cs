@@ -86,6 +86,10 @@ namespace RustFreeVM {
         private readonly ushort? _word;
 
         public Value() { }
+        public Value(Value _source) {
+            _byte = _source._byte;
+            _word = _source._word;
+        }
 
         public Value(byte v) {
             _byte = v;
