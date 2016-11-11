@@ -1,0 +1,4 @@
+Value EQU 0xFF
+MOV X, Value
+ADD X, Value
+end: HLT

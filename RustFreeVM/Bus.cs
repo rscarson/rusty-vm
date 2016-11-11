@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace RustFreeVM {
-    class Bus {
+    public class Bus {
         private static Bus instance;
         private Queue<Command> command_queue;
 
@@ -81,7 +81,7 @@ namespace RustFreeVM {
         }
     }
 
-    class Value {
+    public class Value {
         private readonly byte? _byte;
         private readonly ushort? _word;
 

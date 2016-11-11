@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace RustFreeVM {
-    class Instruction {
+    public class Instruction {
         public byte Opcode { get; set; }
         public List<Operand> Operands;
 
@@ -51,10 +51,11 @@ namespace RustFreeVM {
         }
     }
 
-    class Operand {
+    public class Operand {
         public byte Type { get; set; }
         public Value Value { get; set; }
 
+        public Operand() {  }
         public Operand(Operand _source) {
             Type = _source.Type;
             Value = new Value(_source.Value);
